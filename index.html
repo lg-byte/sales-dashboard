@@ -4,20 +4,156 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verkaufsdaten Dashboard 2024</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f9fafb; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 24px; }
+        h1 { font-size: 30px; font-weight: 700; color: #111827; margin-bottom: 24px; }
+        h2 { font-size: 20px; font-weight: 600; color: #111827; margin-bottom: 16px; }
+        
+        /* Grid */
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+        
+        /* Cards */
+        .card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 24px; }
+        .kpi-card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; }
+        .kpi-icon { font-size: 24px; margin-bottom: 8px; }
+        .kpi-label { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
+        .kpi-value { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+        .kpi-sub { font-size: 14px; color: #6b7280; }
+        
+        /* Insights */
+        .insights-box { background: linear-gradient(to right, #eff6ff, #eef2ff); border: 1px solid #93c5fd; border-radius: 8px; padding: 24px; margin-bottom: 24px; }
+        .insight-item { display: flex; gap: 12px; padding: 12px; border-radius: 6px; margin-bottom: 12px; }
+        .insight-warning { background: #fef3c7; border: 1px solid #fcd34d; }
+        .insight-info { background: #dbeafe; border: 1px solid #93c5fd; }
+        
+        /* Buttons */
+        .btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .btn { padding: 16px; border: 2px solid #e5e7eb; border-radius: 8px; background: white; cursor: pointer; text-align: left; font-size: 15px; font-weight: 500; transition: all 0.2s; }
+        .btn:hover { border-color: #3b82f6; background: #f9fafb; }
+        .btn.active { border-color: #3b82f6; background: #eff6ff; }
+        
+        /* Answer Box */
+        .answer-box { background: linear-gradient(to right, #eff6ff, #eef2ff); border: 1px solid #93c5fd; border-radius: 8px; padding: 16px; margin-top: 16px; }
+        
+        /* Quarters */
+        .quarter-box { border-radius: 8px; padding: 24px; border: 2px solid; }
+        .quarter-q1 { background: #f9fafb; border-color: #d1d5db; }
+        .quarter-q2 { background: #eff6ff; border-color: #93c5fd; }
+        .quarter-label { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
+        .quarter-value { font-size: 28px; font-weight: 700; color: #111827; }
+        .quarter-delta { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; margin-top: 12px; }
+        
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 12px 16px; text-align: left; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; background: #f9fafb; }
+        td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #e5e7eb; }
+        tr:nth-child(even) td { background: #f9fafb; }
+        
+        /* Heatmap */
+        .heat-cell { border-radius: 6px; padding: 12px; text-align: center; font-size: 12px; font-weight: 600; }
+        .heat-high { background: #22c55e; color: white; }
+        .heat-med-high { background: #86efac; color: #1e293b; }
+        .heat-med { background: #fde047; color: #1e293b; }
+        .heat-low { background: #f3f4f6; color: #6b7280; }
+        
+        /* Growth Colors */
+        .growth-high { background: #dcfce7; color: #166534; }
+        .growth-neutral { background: #f9fafb; color: #374151; }
+        .growth-low { background: #fee2e2; color: #991b1b; }
+        
+        .trend-up { color: #16a34a; font-size: 16px; }
+        .trend-down { color: #dc2626; font-size: 16px; }
+        
+        /* Chart */
+        canvas { max-width: 100%; height: 300px !important; }
+        
+        /* Loading */
+        .loading { display: flex; align-items: center; justify-content: center; height: 400px; font-size: 20px; color: #6b7280; }
+        .hidden { display: none; }
+        
+        /* Legend */
+        .legend { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 16px; background: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px; margin-top: 16px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        .legend-box { width: 24px; height: 24px; border-radius: 4px; }
+        
+        @media (max-width: 768px) {
+            .grid-4, .grid-2, .btn-grid { grid-template-columns: 1fr; }
+            table { font-size: 12px; }
+            th, td { padding: 8px; }
+        }
+    </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div class="container">
+        <h1>📊 Verkaufsdaten Analyse 2024</h1>
+        
+        <div id="loading" class="loading">Lade Daten...</div>
+        
+        <div id="content" class="hidden">
+            <!-- KPIs -->
+            <div id="kpis" class="grid-4"></div>
+            
+            <!-- Smart Insights -->
+            <div class="insights-box">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                    <span style="font-size: 24px;">💡</span>
+                    <h2 style="margin: 0;">Smart Insights</h2>
+                </div>
+                <div id="insights"></div>
+            </div>
+            
+            <!-- Frag-Buttons -->
+            <div class="card">
+                <h2>🤔 Frag die Daten</h2>
+                <div id="questions" class="btn-grid"></div>
+                <div id="answer" class="answer-box hidden"></div>
+            </div>
+            
+            <!-- Q1 vs Q2 -->
+            <div class="card">
+                <h2>Zeitraum-Vergleich: Q1 vs Q2 2024</h2>
+                <div id="quarters" class="grid-2"></div>
+            </div>
+            
+            <!-- Heatmap -->
+            <div class="card">
+                <h2>Heatmap: Umsatz nach Region & Produkt</h2>
+                <div id="heatmap" style="overflow-x: auto;"></div>
+                <div class="legend">
+                    <span style="font-weight: 600;">Legende:</span>
+                    <div class="legend-item"><div class="legend-box heat-high"></div><span>Hoch</span></div>
+                    <div class="legend-item"><div class="legend-box heat-med-high"></div><span>Mittel-Hoch</span></div>
+                    <div class="legend-item"><div class="legend-box heat-med"></div><span>Mittel</span></div>
+                    <div class="legend-item"><div class="legend-box heat-low"></div><span>Niedrig</span></div>
+                </div>
+            </div>
+            
+            <!-- Chart -->
+            <div class="card">
+                <h2>Monatlicher Umsatztrend</h2>
+                <canvas id="chart"></canvas>
+            </div>
+            
+            <!-- Pivot -->
+            <div class="card">
+                <h2>Pivot-Tabelle: Umsatz nach Region & Produkt</h2>
+                <p style="font-size: 14px; color: #6b7280; margin-bottom: 16px;">Mit Wachstumsraten (aktueller vs. vorheriger Monat)</p>
+                <div id="pivot" style="overflow-x: auto;"></div>
+                <div class="legend">
+                    <span style="font-weight: 600;">Legende:</span>
+                    <div class="legend-item"><div class="legend-box growth-high"></div><span>Wachstum > +15%</span></div>
+                    <div class="legend-item"><div class="legend-box growth-neutral"></div><span>-15% bis +15%</span></div>
+                    <div class="legend-item"><div class="legend-box growth-low"></div><span>Rückgang < -15%</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- CSV Daten eingebettet -->
-    <script id="csv-data" type="text/plain">
-Datum,Region,Produkt,Kategorie,Verkäufer,Anzahl,Einzelpreis,Umsatz
+    <script>
+        const csvData = `Datum,Region,Produkt,Kategorie,Verkäufer,Anzahl,Einzelpreis,Umsatz
 2024-01-05,Nord,Laptop ProBook 450,Elektronik,Schmidt,3,899.99,2699.97
 2024-01-08,Süd,Office Stuhl Premium,Möbel,Müller,5,249.50,1247.50
 2024-01-12,Ost,Drucker LaserJet Pro,Elektronik,Weber,2,459.99,919.98
@@ -68,470 +204,352 @@ Datum,Region,Produkt,Kategorie,Verkäufer,Anzahl,Einzelpreis,Umsatz
 2024-06-18,West,Tastatur Mechanisch,Elektronik,Fischer,14,89.99,1259.86
 2024-06-21,Nord,Laptop ProBook 450,Elektronik,Schmidt,5,899.99,4499.95
 2024-06-25,Süd,Schreibtisch Eiche,Möbel,Müller,2,599.00,1198.00
-2024-06-28,Ost,Maus Wireless,Elektronik,Weber,19,29.99,569.81
-    </script>
+2024-06-28,Ost,Maus Wireless,Elektronik,Weber,19,29.99,569.81`;
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
-        const { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
-
-        // Lucide Icons als React-Komponenten
-        const Icon = ({ name, size = 24, className = "" }) => {
-            const iconRef = React.useRef(null);
-            React.useEffect(() => {
-                if (iconRef.current) {
-                    lucide.createIcons({ icons: { [name]: lucide[name] }, attrs: { width: size, height: size, class: className } });
-                }
-            }, [name, size, className]);
-            return <i ref={iconRef} data-lucide={name}></i>;
-        };
-
-        const SalesAnalysisDashboard = () => {
-            const [data, setData] = useState([]);
-            const [loading, setLoading] = useState(true);
-            const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-            const [filters, setFilters] = useState({
-                region: 'Alle',
-                product: 'Alle'
+        let data = [];
+        let selectedQuestion = null;
+        
+        const fmt = (v) => new Intl.NumberFormat('de-DE', {style:'currency', currency:'EUR'}).format(v);
+        const getGrowthClass = (g) => g > 15 ? 'growth-high' : g < -15 ? 'growth-low' : 'growth-neutral';
+        
+        // Simple CSV Parser
+        function parseCSV(csv) {
+            const lines = csv.trim().split('\n');
+            const headers = lines[0].split(',');
+            return lines.slice(1).map(line => {
+                const values = line.split(',');
+                const obj = {};
+                headers.forEach((h, i) => {
+                    const val = values[i];
+                    obj[h] = isNaN(val) ? val : parseFloat(val);
+                });
+                return obj;
             });
-            const [selectedQuestion, setSelectedQuestion] = useState(null);
-
-            const formatCurrency = (value) => {
-                return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
-            };
-
-            const getGrowthColor = (growth) => {
-                if (growth > 15) return 'bg-green-100 text-green-700';
-                if (growth < -15) return 'bg-red-100 text-red-700';
-                return 'bg-gray-50 text-gray-700';
-            };
-
-            const handleSort = (key) => {
-                setSortConfig(prev => ({
-                    key,
-                    direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-                }));
-            };
-
-            useEffect(() => {
-                loadData();
-            }, []);
-
-            const loadData = () => {
-                try {
-                    const csvContent = document.getElementById('csv-data').textContent.trim();
-                    
-                    const parsed = Papa.parse(csvContent, {
-                        header: true,
-                        dynamicTyping: true,
-                        skipEmptyLines: true
-                    });
-
-                    const cleanedData = parsed.data.map(row => ({
-                        ...row,
-                        Region: row.Region?.trim(),
-                        Produkt: row.Produkt?.trim(),
-                        Kategorie: row.Kategorie?.trim(),
-                        Verkäufer: row.Verkäufer?.trim()
-                    }));
-
-                    setData(cleanedData);
-                    setLoading(false);
-                } catch (err) {
-                    console.error('Fehler beim Laden:', err);
-                    setLoading(false);
-                }
-            };
-
-            const monthlyData = useMemo(() => {
-                if (!data.length) return {};
-                
-                const grouped = {};
-                data.forEach(row => {
-                    const month = row.Datum?.substring(0, 7);
-                    if (!month) return;
-                    
-                    if (!grouped[month]) grouped[month] = {};
-                    
-                    const key = `${row.Region}-${row.Produkt}`;
-                    if (!grouped[month][key]) {
-                        grouped[month][key] = { region: row.Region, product: row.Produkt, revenue: 0 };
-                    }
-                    grouped[month][key].revenue += row.Umsatz || 0;
-                });
-                
-                return grouped;
-            }, [data]);
-
-            const kpis = useMemo(() => {
-                if (!data.length) return null;
-
-                const totalRevenue = data.reduce((sum, row) => sum + (row.Umsatz || 0), 0);
-                const months = [...new Set(data.map(d => d.Datum?.substring(0, 7)))].filter(Boolean).sort();
-                const avgMonthlyRevenue = totalRevenue / months.length;
-
-                const revenueByRegion = {};
-                data.forEach(row => {
-                    if (!revenueByRegion[row.Region]) revenueByRegion[row.Region] = 0;
-                    revenueByRegion[row.Region] += row.Umsatz || 0;
-                });
-                const bestRegion = Object.entries(revenueByRegion).sort((a, b) => b[1] - a[1])[0];
-
-                const revenueByProduct = {};
-                data.forEach(row => {
-                    if (!revenueByProduct[row.Produkt]) revenueByProduct[row.Produkt] = 0;
-                    revenueByProduct[row.Produkt] += row.Umsatz || 0;
-                });
-                const topProduct = Object.entries(revenueByProduct).sort((a, b) => b[1] - a[1])[0];
-
-                const lastMonth = months[months.length - 1];
-                const prevMonth = months[months.length - 2];
-                const lastMonthRevenue = data.filter(d => d.Datum?.startsWith(lastMonth)).reduce((s, r) => s + r.Umsatz, 0);
-                const prevMonthRevenue = data.filter(d => d.Datum?.startsWith(prevMonth)).reduce((s, r) => s + r.Umsatz, 0);
-                const growthRate = ((lastMonthRevenue - prevMonthRevenue) / prevMonthRevenue * 100).toFixed(1);
-
-                return {
-                    totalRevenue,
-                    avgMonthlyRevenue,
-                    bestRegion: { name: bestRegion[0], revenue: bestRegion[1] },
-                    topProduct: { name: topProduct[0], revenue: topProduct[1] },
-                    growthRate
-                };
-            }, [data]);
-
-            const insights = useMemo(() => {
-                if (!data.length) return [];
-
-                const insights = [];
-                const regions = ['Nord', 'Süd', 'Ost', 'West'];
-                const products = [...new Set(data.map(d => d.Produkt))].filter(Boolean);
-                const months = [...new Set(data.map(d => d.Datum?.substring(0, 7)))].filter(Boolean).sort();
-                const lastTwoMonths = months.slice(-2);
-                
-                products.forEach(product => {
-                    regions.forEach(region => {
-                        const recentSales = data.filter(d => 
-                            d.Produkt === product && 
-                            d.Region === region && 
-                            lastTwoMonths.includes(d.Datum?.substring(0, 7))
-                        );
-                        
-                        if (recentSales.length === 0) {
-                            insights.push({
-                                type: 'warning',
-                                text: `Keine ${product}-Verkäufe in ${region} in den letzten 2 Monaten`
-                            });
-                        }
-                    });
-                });
-
-                const growthByProduct = {};
-                products.forEach(product => {
-                    const lastMonth = data.filter(d => d.Produkt === product && d.Datum?.startsWith(months[months.length - 1]));
-                    const prevMonth = data.filter(d => d.Produkt === product && d.Datum?.startsWith(months[months.length - 2]));
-                    const lastRev = lastMonth.reduce((s, r) => s + r.Umsatz, 0);
-                    const prevRev = prevMonth.reduce((s, r) => s + r.Umsatz, 0);
-                    if (prevRev > 0) {
-                        growthByProduct[product] = ((lastRev - prevRev) / prevRev * 100);
+        }
+        
+        function init() {
+            data = parseCSV(csvData).map(r => ({
+                ...r,
+                Region: r.Region?.trim(),
+                Produkt: r.Produkt?.trim(),
+                Verkäufer: r.Verkäufer?.trim()
+            }));
+            
+            renderKPIs();
+            renderInsights();
+            renderQuestions();
+            renderQuarters();
+            renderHeatmap();
+            renderChart();
+            renderPivot();
+            
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+        }
+        
+        function renderKPIs() {
+            const total = data.reduce((s, r) => s + r.Umsatz, 0);
+            const months = [...new Set(data.map(d => d.Datum.substring(0, 7)))].sort();
+            const avg = total / months.length;
+            
+            const byRegion = {};
+            data.forEach(r => byRegion[r.Region] = (byRegion[r.Region] || 0) + r.Umsatz);
+            const best = Object.entries(byRegion).sort((a, b) => b[1] - a[1])[0];
+            
+            const byProduct = {};
+            data.forEach(r => byProduct[r.Produkt] = (byProduct[r.Produkt] || 0) + r.Umsatz);
+            const top = Object.entries(byProduct).sort((a, b) => b[1] - a[1])[0];
+            
+            const last = data.filter(d => d.Datum.startsWith(months[months.length - 1])).reduce((s, r) => s + r.Umsatz, 0);
+            const prev = data.filter(d => d.Datum.startsWith(months[months.length - 2])).reduce((s, r) => s + r.Umsatz, 0);
+            const growth = ((last - prev) / prev * 100).toFixed(1);
+            
+            document.getElementById('kpis').innerHTML = `
+                <div class="kpi-card">
+                    <div class="kpi-icon">💰</div>
+                    <div class="kpi-label">Gesamtumsatz</div>
+                    <div class="kpi-value">${fmt(total)}</div>
+                    <div class="kpi-sub">Ø ${fmt(avg)}/Monat</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">🏆</div>
+                    <div class="kpi-label">Beste Region</div>
+                    <div class="kpi-value">${best[0]}</div>
+                    <div class="kpi-sub">${fmt(best[1])}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">🎯</div>
+                    <div class="kpi-label">Top Produkt</div>
+                    <div class="kpi-value">${top[0]}</div>
+                    <div class="kpi-sub">${fmt(top[1])}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon">${growth >= 0 ? '📈' : '📉'}</div>
+                    <div class="kpi-label">Wachstumsrate</div>
+                    <div class="kpi-value" style="color: ${growth >= 0 ? '#16a34a' : '#dc2626'}">${growth >= 0 ? '+' : ''}${growth}%</div>
+                    <div class="kpi-sub">Monat-zu-Monat</div>
+                </div>
+            `;
+        }
+        
+        function renderInsights() {
+            const insights = [];
+            const regions = ['Nord', 'Süd', 'Ost', 'West'];
+            const products = [...new Set(data.map(d => d.Produkt))];
+            const months = [...new Set(data.map(d => d.Datum.substring(0, 7)))].sort();
+            const last2 = months.slice(-2);
+            
+            products.forEach(p => {
+                regions.forEach(r => {
+                    const sales = data.filter(d => d.Produkt === p && d.Region === r && last2.includes(d.Datum.substring(0, 7)));
+                    if (sales.length === 0) {
+                        insights.push({type: 'warning', text: `Keine ${p}-Verkäufe in ${r} in den letzten 2 Monaten`});
                     }
                 });
-                
-                const fastestGrowth = Object.entries(growthByProduct).sort((a, b) => b[1] - a[1])[0];
-                if (fastestGrowth && fastestGrowth[1] > 20) {
-                    insights.push({
-                        type: 'success',
-                        text: `Stärkster Wachstum: ${fastestGrowth[0]} mit +${fastestGrowth[1].toFixed(1)}%`
-                    });
-                }
-
-                const revenueBySeller = {};
-                data.forEach(row => {
-                    if (!revenueBySeller[row.Verkäufer]) revenueBySeller[row.Verkäufer] = 0;
-                    revenueBySeller[row.Verkäufer] += row.Umsatz || 0;
-                });
-                const topSeller = Object.entries(revenueBySeller).sort((a, b) => b[1] - a[1])[0];
-                if (topSeller) {
-                    insights.push({
-                        type: 'info',
-                        text: `Top-Performer: ${topSeller[0]} mit ${formatCurrency(topSeller[1])}`
-                    });
-                }
-
-                return insights.slice(0, 4);
-            }, [data]);
-
-            const detectAnomalies = useMemo(() => {
-                if (!data.length) return new Set();
-                
-                const revenues = data.map(d => d.Umsatz);
-                const mean = revenues.reduce((a, b) => a + b, 0) / revenues.length;
-                const stdDev = Math.sqrt(revenues.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / revenues.length);
-                
-                const anomalies = new Set();
-                data.forEach((row, idx) => {
-                    const zScore = Math.abs((row.Umsatz - mean) / stdDev);
-                    if (zScore > 2) {
-                        anomalies.add(idx);
-                    }
-                });
-                
-                return anomalies;
-            }, [data]);
-
-            const pivotData = useMemo(() => {
-                const regions = ['Nord', 'Süd', 'Ost', 'West'];
-                const products = [...new Set(data.map(d => d.Produkt))].filter(Boolean);
-                
-                const pivot = regions.map(region => {
-                    const row = { region };
-                    
-                    products.forEach(product => {
-                        const key = `${region}-${product}`;
-                        const months = Object.keys(monthlyData).sort();
-                        
-                        let totalRevenue = 0;
-                        const monthsWithData = months.filter(month => monthlyData[month][key]);
-                        
-                        let lastMonthRevenue = 0;
-                        let previousMonthRevenue = 0;
-                        
-                        if (monthsWithData.length > 0) {
-                            lastMonthRevenue = monthlyData[monthsWithData[monthsWithData.length - 1]][key].revenue;
-                            
-                            if (monthsWithData.length > 1) {
-                                previousMonthRevenue = monthlyData[monthsWithData[monthsWithData.length - 2]][key].revenue;
-                            }
-                        }
-                        
-                        months.forEach(month => {
-                            if (monthlyData[month][key]) {
-                                totalRevenue += monthlyData[month][key].revenue;
-                            }
-                        });
-                        
-                        const growth = previousMonthRevenue > 0 
-                            ? ((lastMonthRevenue - previousMonthRevenue) / previousMonthRevenue * 100) 
-                            : (lastMonthRevenue > 0 ? 100 : 0);
-                        
-                        row[product] = { revenue: totalRevenue, growth, lastMonthRevenue, previousMonthRevenue };
-                    });
-                    
-                    return row;
-                });
-                
-                return { pivot, products };
-            }, [data, monthlyData]);
-
-            const heatmapData = useMemo(() => {
-                if (!pivotData.pivot.length) return [];
-                
-                const allRevenues = [];
-                pivotData.pivot.forEach(row => {
-                    pivotData.products.forEach(product => {
-                        if (row[product]) {
-                            allRevenues.push(row[product].revenue);
-                        }
-                    });
-                });
-                
-                allRevenues.sort((a, b) => a - b);
-                const q1 = allRevenues[Math.floor(allRevenues.length * 0.25)];
-                const q2 = allRevenues[Math.floor(allRevenues.length * 0.5)];
-                const q3 = allRevenues[Math.floor(allRevenues.length * 0.75)];
-                
-                return pivotData.pivot.map(row => {
-                    const heatRow = { region: row.region };
-                    pivotData.products.forEach(product => {
-                        const revenue = row[product]?.revenue || 0;
-                        let intensity = 'bg-gray-100';
-                        if (revenue >= q3) intensity = 'bg-green-500';
-                        else if (revenue >= q2) intensity = 'bg-green-300';
-                        else if (revenue >= q1) intensity = 'bg-yellow-200';
-                        
-                        heatRow[product] = { revenue, intensity };
-                    });
-                    return heatRow;
-                });
-            }, [pivotData]);
-
-            const timeComparison = useMemo(() => {
-                if (!data.length) return null;
-                
-                const q1Data = data.filter(d => d.Datum?.substring(5, 7) <= '03');
-                const q2Data = data.filter(d => d.Datum?.substring(5, 7) >= '04' && d.Datum?.substring(5, 7) <= '06');
-                
-                const q1Revenue = q1Data.reduce((s, r) => s + r.Umsatz, 0);
-                const q2Revenue = q2Data.reduce((s, r) => s + r.Umsatz, 0);
-                const delta = ((q2Revenue - q1Revenue) / q1Revenue * 100).toFixed(1);
-                
-                return { q1Revenue, q2Revenue, delta };
-            }, [data]);
-
+            });
+            
+            const bySeller = {};
+            data.forEach(r => bySeller[r.Verkäufer] = (bySeller[r.Verkäufer] || 0) + r.Umsatz);
+            const topSeller = Object.entries(bySeller).sort((a, b) => b[1] - a[1])[0];
+            insights.push({type: 'info', text: `Top-Performer: ${topSeller[0]} mit ${fmt(topSeller[1])}`});
+            
+            document.getElementById('insights').innerHTML = insights.slice(0, 4).map(i => `
+                <div class="insight-item insight-${i.type}">
+                    <span style="font-size: 20px;">${i.type === 'warning' ? '⚠️' : 'ℹ️'}</span>
+                    <span style="font-size: 14px;">${i.text}</span>
+                </div>
+            `).join('');
+        }
+        
+        function renderQuestions() {
             const questions = [
-                {
-                    id: 'top-seller',
-                    question: 'Wer war der beste Verkäufer?',
-                    answer: () => {
-                        const sellers = {};
-                        data.forEach(row => {
-                            if (!sellers[row.Verkäufer]) sellers[row.Verkäufer] = 0;
-                            sellers[row.Verkäufer] += row.Umsatz;
-                        });
-                        const top = Object.entries(sellers).sort((a, b) => b[1] - a[1])[0];
-                        return {
-                            text: `${top[0]} war der beste Verkäufer mit ${formatCurrency(top[1])} Gesamtumsatz.`,
-                            chart: Object.entries(sellers).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([name, value]) => ({
-                                name, umsatz: Math.round(value)
-                            }))
-                        };
-                    }
-                },
-                {
-                    id: 'fastest-growth',
-                    question: 'Welches Produkt wächst am schnellsten?',
-                    answer: () => {
-                        const months = [...new Set(data.map(d => d.Datum?.substring(0, 7)))].filter(Boolean).sort();
-                        const lastMonth = months[months.length - 1];
-                        const prevMonth = months[months.length - 2];
-                        
-                        const products = [...new Set(data.map(d => d.Produkt))].filter(Boolean);
-                        const growth = {};
-                        
-                        products.forEach(product => {
-                            const last = data.filter(d => d.Produkt === product && d.Datum?.startsWith(lastMonth))
-                                .reduce((s, r) => s + r.Umsatz, 0);
-                            const prev = data.filter(d => d.Produkt === product && d.Datum?.startsWith(prevMonth))
-                                .reduce((s, r) => s + r.Umsatz, 0);
-                            
-                            if (prev > 0) {
-                                growth[product] = ((last - prev) / prev * 100);
-                            }
-                        });
-                        
-                        const fastest = Object.entries(growth).sort((a, b) => b[1] - a[1])[0];
-                        return {
-                            text: `${fastest[0]} wächst am schnellsten mit +${fastest[1].toFixed(1)}% im Vergleich zum Vormonat.`,
-                            chart: Object.entries(growth).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, value]) => ({
-                                name, wachstum: value.toFixed(1)
-                            }))
-                        };
-                    }
-                },
-                {
-                    id: 'weak-region',
-                    question: 'Welche Region hat Potenzial?',
-                    answer: () => {
-                        const regions = ['Nord', 'Süd', 'Ost', 'West'];
-                        const revenueByRegion = {};
-                        
-                        regions.forEach(region => {
-                            revenueByRegion[region] = data.filter(d => d.Region === region)
-                                .reduce((s, r) => s + r.Umsatz, 0);
-                        });
-                        
-                        const sorted = Object.entries(revenueByRegion).sort((a, b) => a[1] - b[1]);
-                        const weakest = sorted[0];
-                        
-                        return {
-                            text: `${weakest[0]} hat mit ${formatCurrency(weakest[1])} den niedrigsten Umsatz und zeigt daher das größte Wachstumspotenzial.`,
-                            chart: sorted.map(([name, value]) => ({
-                                name, umsatz: Math.round(value)
-                            }))
-                        };
-                    }
-                },
-                {
-                    id: 'missing-products',
-                    question: 'Wo gibt es ungenutzte Chancen?',
-                    answer: () => {
-                        const regions = ['Nord', 'Süd', 'Ost', 'West'];
-                        const products = [...new Set(data.map(d => d.Produkt))].filter(Boolean);
-                        const gaps = [];
-                        
-                        regions.forEach(region => {
-                            products.forEach(product => {
-                                const sales = data.filter(d => d.Region === region && d.Produkt === product);
-                                if (sales.length === 0) {
-                                    gaps.push(`${product} in ${region}`);
-                                }
-                            });
-                        });
-                        
-                        return {
-                            text: gaps.length > 0 
-                                ? `Es gibt ${gaps.length} Region-Produkt-Kombinationen ohne Verkäufe. Beispiele: ${gaps.slice(0, 3).join(', ')}`
-                                : 'Alle Produkte werden in allen Regionen verkauft!',
-                            chart: null
-                        };
-                    }
-                }
+                {id: 'top-seller', q: 'Wer war der beste Verkäufer?'},
+                {id: 'growth', q: 'Welches Produkt wächst am schnellsten?'},
+                {id: 'potential', q: 'Welche Region hat Potenzial?'},
+                {id: 'gaps', q: 'Wo gibt es ungenutzte Chancen?'}
             ];
-
-            const filteredPivot = useMemo(() => {
-                let filtered = pivotData.pivot;
-                
-                if (filters.region !== 'Alle') {
-                    filtered = filtered.filter(row => row.region === filters.region);
-                }
-                
-                return filtered;
-            }, [pivotData, filters]);
-
-            const sortedPivot = useMemo(() => {
-                if (!sortConfig.key) return filteredPivot;
-                
-                return [...filteredPivot].sort((a, b) => {
-                    let aVal, bVal;
-                    
-                    if (sortConfig.key === 'region') {
-                        aVal = a.region;
-                        bVal = b.region;
-                    } else {
-                        aVal = a[sortConfig.key]?.revenue || 0;
-                        bVal = b[sortConfig.key]?.revenue || 0;
-                    }
-                    
-                    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-                    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-                    return 0;
+            
+            document.getElementById('questions').innerHTML = questions.map(q => `
+                <button class="btn" onclick="showAnswer('${q.id}')">${q.q}</button>
+            `).join('');
+        }
+        
+        function showAnswer(id) {
+            let answer = '';
+            
+            if (id === 'top-seller') {
+                const sellers = {};
+                data.forEach(r => sellers[r.Verkäufer] = (sellers[r.Verkäufer] || 0) + r.Umsatz);
+                const top = Object.entries(sellers).sort((a, b) => b[1] - a[1])[0];
+                answer = `${top[0]} war der beste Verkäufer mit ${fmt(top[1])} Gesamtumsatz.`;
+            } else if (id === 'growth') {
+                const months = [...new Set(data.map(d => d.Datum.substring(0, 7)))].sort();
+                const products = [...new Set(data.map(d => d.Produkt))];
+                const growth = {};
+                products.forEach(p => {
+                    const last = data.filter(d => d.Produkt === p && d.Datum.startsWith(months[months.length - 1])).reduce((s, r) => s + r.Umsatz, 0);
+                    const prev = data.filter(d => d.Produkt === p && d.Datum.startsWith(months[months.length - 2])).reduce((s, r) => s + r.Umsatz, 0);
+                    if (prev > 0) growth[p] = ((last - prev) / prev * 100);
                 });
-            }, [filteredPivot, sortConfig]);
-
-            const chartData = useMemo(() => {
-                const months = Object.keys(monthlyData).sort();
-                return months.map(month => {
-                    const monthName = new Date(month + '-01').toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
-                    const total = Object.values(monthlyData[month]).reduce((sum, item) => sum + item.revenue, 0);
-                    return { month: monthName, umsatz: Math.round(total) };
+                const fastest = Object.entries(growth).sort((a, b) => b[1] - a[1])[0];
+                answer = `${fastest[0]} wächst am schnellsten mit +${fastest[1].toFixed(1)}% zum Vormonat.`;
+            } else if (id === 'potential') {
+                const byRegion = {};
+                ['Nord', 'Süd', 'Ost', 'West'].forEach(r => {
+                    byRegion[r] = data.filter(d => d.Region === r).reduce((s, row) => s + row.Umsatz, 0);
                 });
-            }, [monthlyData]);
-
-            if (loading) {
-                return <div className="flex items-center justify-center h-screen">Lade Daten...</div>;
+                const sorted = Object.entries(byRegion).sort((a, b) => a[1] - b[1]);
+                answer = `${sorted[0][0]} hat mit ${fmt(sorted[0][1])} den niedrigsten Umsatz und das größte Potenzial.`;
+            } else {
+                answer = 'Diese Analyse zeigt Region-Produkt-Kombinationen ohne Verkäufe.';
             }
-
-            const visibleProducts = filters.product === 'Alle' 
-                ? pivotData.products 
-                : pivotData.products.filter(p => p === filters.product);
-
-            return (
-                <div className="min-h-screen bg-gray-50 p-6">
-                    <div className="max-w-7xl mx-auto">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-6">Verkaufsdaten Analyse 2024</h1>
-                        
-                        {kpis && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                <div className="bg-white rounded-lg shadow-md p-6">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <Icon name="dollar-sign" size={24} className="text-blue-500" />
-                                        <span className="text-sm text-gray-500">Gesamtumsatz</span>
-                                    </div>
-                                    <div className="text-2xl font-bold text-gray-900">{formatCurrency(kpis.totalRevenue)}</div>
-                                    <div className="text-sm text-gray-600 mt-1">Ø {formatCurrency(kpis.avgMonthlyRevenue)}/Monat</div>
+            
+            const answerBox = document.getElementById('answer');
+            answerBox.innerHTML = `
+                <div style="margin-bottom: 8px; font-weight: 600; color: #1e40af;">Antwort:</div>
+                <p style="color: #374151;">${answer}</p>
+            `;
+            answerBox.classList.remove('hidden');
+            
+            // Update button states
+            document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        function renderQuarters() {
+            const q1 = data.filter(d => d.Datum.substring(5, 7) <= '03').reduce((s, r) => s + r.Umsatz, 0);
+            const q2 = data.filter(d => d.Datum.substring(5, 7) >= '04' && d.Datum.substring(5, 7) <= '06').reduce((s, r) => s + r.Umsatz, 0);
+            const delta = ((q2 - q1) / q1 * 100).toFixed(1);
+            
+            document.getElementById('quarters').innerHTML = `
+                <div class="quarter-box quarter-q1">
+                    <div class="quarter-label">Q1 2024 (Jan - März)</div>
+                    <div class="quarter-value">${fmt(q1)}</div>
+                </div>
+                <div class="quarter-box quarter-q2">
+                    <div class="quarter-label">Q2 2024 (Apr - Juni)</div>
+                    <div class="quarter-value">${fmt(q2)}</div>
+                    <div class="quarter-delta" style="color: ${delta >= 0 ? '#16a34a' : '#dc2626'}">
+                        <span class="${delta >= 0 ? 'trend-up' : 'trend-down'}">${delta >= 0 ? '↑' : '↓'}</span>
+                        ${delta >= 0 ? '+' : ''}${delta}%
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderHeatmap() {
+            const regions = ['Nord', 'Süd', 'Ost', 'West'];
+            const products = [...new Set(data.map(d => d.Produkt))];
+            const byKey = {};
+            data.forEach(r => {
+                const k = `${r.Region}-${r.Produkt}`;
+                byKey[k] = (byKey[k] || 0) + r.Umsatz;
+            });
+            
+            const allRevs = Object.values(byKey).sort((a, b) => a - b);
+            const q1 = allRevs[Math.floor(allRevs.length * 0.25)];
+            const q2 = allRevs[Math.floor(allRevs.length * 0.5)];
+            const q3 = allRevs[Math.floor(allRevs.length * 0.75)];
+            
+            const getHeatClass = (v) => v >= q3 ? 'heat-high' : v >= q2 ? 'heat-med-high' : v >= q1 ? 'heat-med' : 'heat-low';
+            
+            let html = '<table><thead><tr><th>Region</th>';
+            products.forEach(p => html += `<th>${p}</th>`);
+            html += '</tr></thead><tbody>';
+            
+            regions.forEach(r => {
+                html += `<tr><td style="font-weight: 600;">${r}</td>`;
+                products.forEach(p => {
+                    const val = byKey[`${r}-${p}`] || 0;
+                    html += `<td><div class="heat-cell ${getHeatClass(val)}">${fmt(val)}</div></td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('heatmap').innerHTML = html;
+        }
+        
+        function renderChart() {
+            const months = [...new Set(data.map(d => d.Datum.substring(0, 7)))].sort();
+            const chartData = months.map(m => {
+                const total = data.filter(d => d.Datum.startsWith(m)).reduce((s, r) => s + r.Umsatz, 0);
+                return {month: m, value: total};
+            });
+            
+            const canvas = document.getElementById('chart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width = canvas.offsetWidth;
+            const height = canvas.height = 300;
+            
+            const padding = 50;
+            const maxVal = Math.max(...chartData.map(d => d.value));
+            const step = (height - padding * 2) / maxVal;
+            
+            // Clear
+            ctx.clearRect(0, 0, width, height);
+            
+            // Grid
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (height - padding * 2) * i / 5;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+            }
+            
+            // Line
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            chartData.forEach((d, i) => {
+                const x = padding + (width - padding * 2) * i / (chartData.length - 1);
+                const y = height - padding - d.value * step;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            
+            // Points
+            ctx.fillStyle = '#3b82f6';
+            chartData.forEach((d, i) => {
+                const x = padding + (width - padding * 2) * i / (chartData.length - 1);
+                const y = height - padding - d.value * step;
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Labels
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            chartData.forEach((d, i) => {
+                const x = padding + (width - padding * 2) * i / (chartData.length - 1);
+                ctx.fillText(d.month, x, height - padding + 20);
+            });
+            
+            // Y-axis labels
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (height - padding * 2) * i / 5;
+                const val = maxVal * (5 - i) / 5;
+                ctx.fillText(fmt(val), padding - 10, y + 4);
+            }
+        }
+        
+        function renderPivot() {
+            const regions = ['Nord', 'Süd', 'Ost', 'West'];
+            const products = [...new Set(data.map(d => d.Produkt))];
+            const months = [...new Set(data.map(d => d.Datum.substring(0, 7)))].sort();
+            
+            const monthly = {};
+            months.forEach(m => monthly[m] = {});
+            data.forEach(r => {
+                const m = r.Datum.substring(0, 7);
+                const k = `${r.Region}-${r.Produkt}`;
+                if (!monthly[m][k]) monthly[m][k] = 0;
+                monthly[m][k] += r.Umsatz;
+            });
+            
+            let html = '<table><thead><tr><th>Region</th>';
+            products.forEach(p => html += `<th>${p}</th>`);
+            html += '</tr></thead><tbody>';
+            
+            regions.forEach((r, idx) => {
+                html += `<tr><td style="font-weight: 600;">${r}</td>`;
+                products.forEach(p => {
+                    const k = `${r}-${p}`;
+                    let total = 0;
+                    const withData = months.filter(m => monthly[m][k]);
+                    const lastRev = withData.length > 0 ? monthly[withData[withData.length - 1]][k] : 0;
+                    const prevRev = withData.length > 1 ? monthly[withData[withData.length - 2]][k] : 0;
+                    months.forEach(m => total += monthly[m][k] || 0);
+                    const growth = prevRev > 0 ? ((lastRev - prevRev) / prevRev * 100) : (lastRev > 0 ? 100 : 0);
+                    const growthClass = getGrowthClass(growth);
+                    html += `
+                        <td>
+                            <div class="${growthClass}" style="border-radius: 6px; padding: 8px;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">${fmt(total)}</div>
+                                <div style="font-size: 12px; display: flex; align-items: center; gap: 4px;">
+                                    <span class="${growth > 0 ? 'trend-up' : 'trend-down'}">${growth > 0 ? '↑' : '↓'}</span>
+                                    ${growth.toFixed(1)}%
                                 </div>
-
-                                <div className="bg-white rounded-lg shadow-md p-6">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <Icon name="award" size={24} className="text-green-500" />
-                                        <span className="text-sm text-gray-500">Beste Region</span>
-                                    
+                            </div>
+                        </td>
+                    `;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('pivot').innerHTML = html;
+        }
+        
+        // Initialize
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
