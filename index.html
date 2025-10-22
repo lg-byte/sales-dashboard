@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verkaufsdaten Dashboard 2024</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- CSV Daten eingebettet -->
+    <script id="csv-data" type="text/plain">
+Datum,Region,Produkt,Kategorie,Verkäufer,Anzahl,Einzelpreis,Umsatz
+2024-01-05,Nord,Laptop ProBook 450,Elektronik,Schmidt,3,899.99,2699.97
+2024-01-08,Süd,Office Stuhl Premium,Möbel,Müller,5,249.50,1247.50
+2024-01-12,Ost,Drucker LaserJet Pro,Elektronik,Weber,2,459.99,919.98
+2024-01-15,West,Schreibtisch Eiche,Möbel,Fischer,1,599.00,599.00
+2024-01-18,Nord,Monitor 27 Zoll,Elektronik,Schmidt,8,299.99,2399.92
+2024-01-22,Süd,Tastatur Mechanisch,Elektronik,Müller,12,89.99,1079.88
+2024-01-25,Ost,Bürostuhl Basic,Möbel,Weber,6,149.99,899.94
+2024-01-28,West,Laptop ProBook 450,Elektronik,Fischer,2,899.99,1799.98
+2024-02-02,Nord,Rollcontainer,Möbel,Schmidt,4,129.99,519.96
+2024-02-05,Süd,Drucker LaserJet Pro,Elektronik,Müller,3,459.99,1379.97
+2024-02-09,Ost,Monitor 27 Zoll,Elektronik,Weber,5,299.99,1499.95
+2024-02-12,West,Maus Wireless,Elektronik,Fischer,15,29.99,449.85
+2024-02-16,Nord,Schreibtisch Eiche,Möbel,Schmidt,2,599.00,1198.00
+2024-02-19,Süd,Laptop ProBook 450,Elektronik,Müller,4,899.99,3599.96
+2024-02-23,Ost,Office Stuhl Premium,Möbel,Weber,3,249.50,748.50
+2024-02-26,West,Tastatur Mechanisch,Elektronik,Fischer,10,89.99,899.90
+2024-03-01,Nord,Drucker LaserJet Pro,Elektronik,Schmidt,1,459.99,459.99
+2024-03-05,Süd,Monitor 27 Zoll,Elektronik,Müller,7,299.99,2099.93
+2024-03-08,Ost,Laptop ProBook 450,Elektronik,Weber,5,899.99,4499.95
+2024-03-12,West,Bürostuhl Basic,Möbel,Fischer,8,149.99,1199.92
+2024-03-15,Nord,Maus Wireless,Elektronik,Schmidt,20,29.99,599.80
+2024-03-19,Süd,Schreibtisch Eiche,Möbel,Müller,3,599.00,1797.00
+2024-03-22,Ost,Tastatur Mechanisch,Elektronik,Weber,9,89.99,809.91
+2024-03-26,West,Office Stuhl Premium,Möbel,Fischer,4,249.50,998.00
+2024-03-29,Nord,Laptop ProBook 450,Elektronik,Schmidt,6,899.99,5399.94
+2024-04-02,Süd,Rollcontainer,Möbel,Müller,7,129.99,909.93
+2024-04-05,Ost,Drucker LaserJet Pro,Elektronik,Weber,4,459.99,1839.96
+2024-04-09,West,Monitor 27 Zoll,Elektronik,Fischer,6,299.99,1799.94
+2024-04-12,Nord,Office Stuhl Premium,Möbel,Schmidt,5,249.50,1247.50
+2024-04-16,Süd,Tastatur Mechanisch,Elektronik,Müller,11,89.99,989.89
+2024-04-19,Ost,Laptop ProBook 450,Elektronik,Weber,3,899.99,2699.97
+2024-04-23,West,Schreibtisch Eiche,Möbel,Fischer,2,599.00,1198.00
+2024-04-26,Nord,Maus Wireless,Elektronik,Schmidt,18,29.99,539.82
+2024-04-30,Süd,Bürostuhl Basic,Möbel,Müller,9,149.99,1349.91
+2024-05-03,Ost,Monitor 27 Zoll,Elektronik,Weber,10,299.99,2999.90
+2024-05-07,West,Drucker LaserJet Pro,Elektronik,Fischer,2,459.99,919.98
+2024-05-10,Nord,Laptop ProBook 450,Elektronik,Schmidt,7,899.99,6299.93
+2024-05-14,Süd,Office Stuhl Premium,Möbel,Müller,6,249.50,1497.00
+2024-05-17,Ost,Tastatur Mechanisch,Elektronik,Weber,13,89.99,1169.87
+2024-05-21,West,Rollcontainer,Möbel,Fischer,5,129.99,649.95
+2024-05-24,Nord,Schreibtisch Eiche,Möbel,Schmidt,1,599.00,599.00
+2024-05-28,Süd,Maus Wireless,Elektronik,Müller,22,29.99,659.78
+2024-05-31,Ost,Laptop ProBook 450,Elektronik,Weber,4,899.99,3599.96
+2024-06-04,West,Monitor 27 Zoll,Elektronik,Fischer,8,299.99,2399.92
+2024-06-07,Nord,Bürostuhl Basic,Möbel,Schmidt,7,149.99,1049.93
+2024-06-11,Süd,Drucker LaserJet Pro,Elektronik,Müller,3,459.99,1379.97
+2024-06-14,Ost,Office Stuhl Premium,Möbel,Weber,4,249.50,998.00
+2024-06-18,West,Tastatur Mechanisch,Elektronik,Fischer,14,89.99,1259.86
+2024-06-21,Nord,Laptop ProBook 450,Elektronik,Schmidt,5,899.99,4499.95
+2024-06-25,Süd,Schreibtisch Eiche,Möbel,Müller,2,599.00,1198.00
+2024-06-28,Ost,Maus Wireless,Elektronik,Weber,19,29.99,569.81
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
+
+        // Lucide Icons als React-Komponenten
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const iconRef = React.useRef(null);
+            React.useEffect(() => {
+                if (iconRef.current) {
+                    lucide.createIcons({ icons: { [name]: lucide[name] }, attrs: { width: size, height: size, class: className } });
+                }
+            }, [name, size, className]);
+            return <i ref={iconRef} data-lucide={name}></i>;
+        };
+
+        const SalesAnalysisDashboard = () => {
+            const [data, setData] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+            const [filters, setFilters] = useState({
+                region: 'Alle',
+                product: 'Alle'
+            });
+            const [selectedQuestion, setSelectedQuestion] = useState(null);
+
+            const formatCurrency = (value) => {
+                return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
+            };
+
+            const getGrowthColor = (growth) => {
+                if (growth > 15) return 'bg-green-100 text-green-700';
+                if (growth < -15) return 'bg-red-100 text-red-700';
+                return 'bg-gray-50 text-gray-700';
+            };
+
+            const handleSort = (key) => {
+                setSortConfig(prev => ({
+                    key,
+                    direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+                }));
+            };
+
+            useEffect(() => {
+                loadData();
+            }, []);
+
+            const loadData = () => {
+                try {
+                    const csvContent = document.getElementById('csv-data').textContent.trim();
+                    
+                    const parsed = Papa.parse(csvContent, {
+                        header: true,
+                        dynamicTyping: true,
+                        skipEmptyLines: true
+                    });
+
+                    const cleanedData = parsed.data.map(row => ({
+                        ...row,
+                        Region: row.Region?.trim(),
+                        Produkt: row.Produkt?.trim(),
+                        Kategorie: row.Kategorie?.trim(),
+                        Verkäufer: row.Verkäufer?.trim()
+                    }));
+
+                    setData(cleanedData);
+                    setLoading(false);
+                } catch (err) {
+                    console.error('Fehler beim Laden:', err);
+                    setLoading(false);
+                }
+            };
+
+            const monthlyData = useMemo(() => {
+                if (!data.length) return {};
+                
+                const grouped = {};
+                data.forEach(row => {
+                    const month = row.Datum?.substring(0, 7);
+                    if (!month) return;
+                    
+                    if (!grouped[month]) grouped[month] = {};
+                    
+                    const key = `${row.Region}-${row.Produkt}`;
+                    if (!grouped[month][key]) {
+                        grouped[month][key] = { region: row.Region, product: row.Produkt, revenue: 0 };
+                    }
+                    grouped[month][key].revenue += row.Umsatz || 0;
+                });
+                
+                return grouped;
+            }, [data]);
+
+            const kpis = useMemo(() => {
+                if (!data.length) return null;
+
+                const totalRevenue = data.reduce((sum, row) => sum + (row.Umsatz || 0), 0);
+                const months = [...new Set(data.map(d => d.Datum?.substring(0, 7)))].filter(Boolean).sort();
+                const avgMonthlyRevenue = totalRevenue / months.length;
+
+                const revenueByRegion = {};
+                data.forEach(row => {
+                    if (!revenueByRegion[row.Region]) revenueByRegion[row.Region] = 0;
+                    revenueByRegion[row.Region] += row.Umsatz || 0;
+                });
+                const bestRegion = Object.entries(revenueByRegion).sort((a, b) => b[1] - a[1])[0];
+
+                const revenueByProduct = {};
+                data.forEach(row => {
+                    if (!revenueByProduct[row.Produkt]) revenueByProduct[row.Produkt] = 0;
+                    revenueByProduct[row.Produkt] += row.Umsatz || 0;
+                });
+                const topProduct = Object.entries(revenueByProduct).sort((a, b) => b[1] - a[1])[0];
+
+                const lastMonth = months[months.length - 1];
+                const prevMonth = months[months.length - 2];
+                const lastMonthRevenue = data.filter(d => d.Datum?.startsWith(lastMonth)).reduce((s, r) => s + r.Umsatz, 0);
+                const prevMonthRevenue = data.filter(d => d.Datum?.startsWith(prevMonth)).reduce((s, r) => s + r.Umsatz, 0);
+                const growthRate = ((lastMonthRevenue - prevMonthRevenue) / prevMonthRevenue * 100).toFixed(1);
+
+                return {
+                    totalRevenue,
+                    avgMonthlyRevenue,
+                    bestRegion: { name: bestRegion[0], revenue: bestRegion[1] },
+                    topProduct: { name: topProduct[0], revenue: topProduct[1] },
+                    growthRate
+                };
+            }, [data]);
+
+            const insights = useMemo(() => {
+                if (!data.length) return [];
+
+                const insights = [];
+                const regions = ['Nord', 'Süd', 'Ost', 'West'];
+                const products = [...new Set(data.map(d => d.Produkt))].filter(Boolean);
+                const months = [...new Set(data.map(d => d.Datum?.substring(0, 7)))].filter(Boolean).sort();
+                const lastTwoMonths = months.slice(-2);
+                
+                products.forEach(product => {
+                    regions.forEach(region => {
+                        const recentSales = data.filter(d => 
+                            d.Produkt === product && 
+                            d.Region === region && 
+                            lastTwoMonths.includes(d.Datum?.substring(0, 7))
+                        );
+                        
+                        if (recentSales.length === 0) {
+                            insights.push({
+                                type: 'warning',
+                                text: `Keine ${product}-Verkäufe in ${region} in den letzten 2 Monaten`
+                            });
+                        }
+                    });
+                });
+
+                const growthByProduct = {};
+                products.forEach(product => {
+                    const lastMonth = data.filter(d => d.Produkt === product && d.Datum?.startsWith(months[months.length - 1]));
+                    const prevMonth = data.filter(d => d.Produkt === product && d.Datum?.startsWith(months[months.length - 2]));
+                    const lastRev = lastMonth.reduce((s, r) => s + r.Umsatz, 0);
+                    const prevRev = prevMonth.reduce((s, r) => s + r.Umsatz, 0);
+                    if (prevRev > 0) {
+                        growthByProduct[product] = ((lastRev - prevRev) / prevRev * 100);
+                    }
+                });
+                
+                const fastestGrowth = Object.entries(growthByProduct).sort((a, b) => b[1] - a[1])[0];
+                if (fastestGrowth && fastestGrowth[1] > 20) {
+                    insights.push({
+                        type: 'success',
+                        text: `Stärkster Wachstum: ${fastestGrowth[0]} mit +${fastestGrowth[1].toFixed(1)}%`
+                    });
+                }
+
+                const revenueBySeller = {};
+                data.forEach(row => {
+                    if (!revenueBySeller[row.Verkäufer]) revenueBySeller[row.Verkäufer] = 0;
+                    revenueBySeller[row.Verkäufer] += row.Umsatz || 0;
+                });
+                const topSeller = Object.entries(revenueBySeller).sort((a, b) => b[1] - a[1])[0];
+                if (topSeller) {
+                    insights.push({
+                        type: 'info',
+                        text: `Top-Performer: ${topSeller[0]} mit ${formatCurrency(topSeller[1])}`
+                    });
+                }
+
+                return insights.slice(0, 4);
+            }, [data]);
+
+            const detectAnomalies = useMemo(() => {
+                if (!data.length) return new Set();
+                
+                const revenues = data.map(d => d.Umsatz);
+                const mean = revenues.reduce((a, b) => a + b, 0) / revenues.length;
+                const stdDev = Math.sqrt(revenues.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / revenues.length);
+                
+                const anomalies = new Set();
+                data.forEach((row, idx) => {
+                    const zScore = Math.abs((row.Umsatz - mean) / stdDev);
+                    if (zScore > 2) {
+                        anomalies.add(idx);
+                    }
+                });
+                
+                return anomalies;
+            }, [data]);
+
+            const pivotData = useMemo(() => {
+                const regions = ['Nord', 'Süd', 'Ost', 'West'];
+                const products = [...new Set(data.map(d => d.Produkt))].filter(Boolean);
+                
+                const pivot = regions.map(region => {
+                    const row = { region };
+                    
+                    products.forEach(product => {
+                        const key = `${region}-${product}`;
+                        const months = Object.keys(monthlyData).sort();
+                        
+                        let totalRevenue = 0;
+                        const monthsWithData = months.filter(month => monthlyData[month][key]);
+                        
+                        let lastMonthRevenue = 0;
+                        let previousMonthRevenue = 0;
+                        
+                        if (monthsWithData.length > 0) {
+                            lastMonthRevenue = monthlyData[monthsWithData[monthsWithData.length - 1]][key].revenue;
+                            
+                            if (monthsWithData.length > 1) {
+                                previousMonthRevenue = monthlyData[monthsWithData[monthsWithData.length - 2]][key].revenue;
+                            }
+                        }
+                        
+                        months.forEach(month => {
+                            if (monthlyData[month][key]) {
+                                totalRevenue += monthlyData[month][key].revenue;
+                            }
+                        });
+                        
+                        const growth = previousMonthRevenue > 0 
+                            ? ((lastMonthRevenue - previousMonthRevenue) / previousMonthRevenue * 100) 
+                            : (lastMonthRevenue > 0 ? 100 : 0);
+                        
+                        row[product] = { revenue: totalRevenue, growth, lastMonthRevenue, previousMonthRevenue };
+                    });
+                    
+                    return row;
+                });
+                
+                return { pivot, products };
+            }, [data, monthlyData]);
+
+            const heatmapData = useMemo(() => {
+                if (!pivotData.pivot.length) return [];
+                
+                const allRevenues = [];
+                pivotData.pivot.forEach(row => {
+                    pivotData.products.forEach(product => {
+                        if (row[product]) {
+                            allRevenues.push(row[product].revenue);
+                        }
+                    });
+                });
+                
+                allRevenues.sort((a, b) => a - b);
+                const q1 = allRevenues[Math.floor(allRevenues.length * 0.25)];
+                const q2 = allRevenues[Math.floor(allRevenues.length * 0.5)];
+                const q3 = allRevenues[Math.floor(allRevenues.length * 0.75)];
+                
+                return pivotData.pivot.map(row => {
+                    const heatRow = { region: row.region };
+                    pivotData.products.forEach(product => {
+                        const revenue = row[product]?.revenue || 0;
+                        let intensity = 'bg-gray-100';
+                        if (revenue >= q3) intensity = 'bg-green-500';
+                        else if (revenue >= q2) intensity = 'bg-green-300';
+                        else if (revenue >= q1) intensity = 'bg-yellow-200';
+                        
+                        heatRow[product] = { revenue, intensity };
+                    });
+                    return heatRow;
+                });
+            }, [pivotData]);
+
+            const timeComparison = useMemo(() => {
+                if (!data.length) return null;
+                
+                const q1Data = data.filter(d => d.Datum?.substring(5, 7) <= '03');
+                const q2Data = data.filter(d => d.Datum?.substring(5, 7) >= '04' && d.Datum?.substring(5, 7) <= '06');
+                
+                const q1Revenue = q1Data.reduce((s, r) => s + r.Umsatz, 0);
+                const q2Revenue = q2Data.reduce((s, r) => s + r.Umsatz, 0);
+                const delta = ((q2Revenue - q1Revenue) / q1Revenue * 100).toFixed(1);
+                
+                return { q1Revenue, q2Revenue, delta };
+            }, [data]);
+
+            const questions = [
+                {
+                    id: 'top-seller',
+                    question: 'Wer war der beste Verkäufer?',
+                    answer: () => {
+                        const sellers = {};
+                        data.forEach(row => {
+                            if (!sellers[row.Verkäufer]) sellers[row.Verkäufer] = 0;
+                            sellers[row.Verkäufer] += row.Umsatz;
+                        });
+                        const top = Object.entries(sellers).sort((a, b) => b[1] - a[1])[0];
+                        return {
+                            text: `${top[0]} war der beste Verkäufer mit ${formatCurrency(top[1])} Gesamtumsatz.`,
+                            chart: Object.entries(sellers).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([name, value]) => ({
+                                name, umsatz: Math.round(value)
+                            }))
+                        };
+                    }
+                },
+                {
+                    id: 'fastest-growth',
+                    question: 'Welches Produkt wächst am schnellsten?',
+                    answer: () => {
+                        const months = [...new Set(data.map(d => d.Datum?.substring(0, 7)))].filter(Boolean).sort();
+                        const lastMonth = months[months.length - 1];
+                        const prevMonth = months[months.length - 2];
+                        
+                        const products = [...new Set(data.map(d => d.Produkt))].filter(Boolean);
+                        const growth = {};
+                        
+                        products.forEach(product => {
+                            const last = data.filter(d => d.Produkt === product && d.Datum?.startsWith(lastMonth))
+                                .reduce((s, r) => s + r.Umsatz, 0);
+                            const prev = data.filter(d => d.Produkt === product && d.Datum?.startsWith(prevMonth))
+                                .reduce((s, r) => s + r.Umsatz, 0);
+                            
+                            if (prev > 0) {
+                                growth[product] = ((last - prev) / prev * 100);
+                            }
+                        });
+                        
+                        const fastest = Object.entries(growth).sort((a, b) => b[1] - a[1])[0];
+                        return {
+                            text: `${fastest[0]} wächst am schnellsten mit +${fastest[1].toFixed(1)}% im Vergleich zum Vormonat.`,
+                            chart: Object.entries(growth).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, value]) => ({
+                                name, wachstum: value.toFixed(1)
+                            }))
+                        };
+                    }
+                },
+                {
+                    id: 'weak-region',
+                    question: 'Welche Region hat Potenzial?',
+                    answer: () => {
+                        const regions = ['Nord', 'Süd', 'Ost', 'West'];
+                        const revenueByRegion = {};
+                        
+                        regions.forEach(region => {
+                            revenueByRegion[region] = data.filter(d => d.Region === region)
+                                .reduce((s, r) => s + r.Umsatz, 0);
+                        });
+                        
+                        const sorted = Object.entries(revenueByRegion).sort((a, b) => a[1] - b[1]);
+                        const weakest = sorted[0];
+                        
+                        return {
+                            text: `${weakest[0]} hat mit ${formatCurrency(weakest[1])} den niedrigsten Umsatz und zeigt daher das größte Wachstumspotenzial.`,
+                            chart: sorted.map(([name, value]) => ({
+                                name, umsatz: Math.round(value)
+                            }))
+                        };
+                    }
+                },
+                {
+                    id: 'missing-products',
+                    question: 'Wo gibt es ungenutzte Chancen?',
+                    answer: () => {
+                        const regions = ['Nord', 'Süd', 'Ost', 'West'];
+                        const products = [...new Set(data.map(d => d.Produkt))].filter(Boolean);
+                        const gaps = [];
+                        
+                        regions.forEach(region => {
+                            products.forEach(product => {
+                                const sales = data.filter(d => d.Region === region && d.Produkt === product);
+                                if (sales.length === 0) {
+                                    gaps.push(`${product} in ${region}`);
+                                }
+                            });
+                        });
+                        
+                        return {
+                            text: gaps.length > 0 
+                                ? `Es gibt ${gaps.length} Region-Produkt-Kombinationen ohne Verkäufe. Beispiele: ${gaps.slice(0, 3).join(', ')}`
+                                : 'Alle Produkte werden in allen Regionen verkauft!',
+                            chart: null
+                        };
+                    }
+                }
+            ];
+
+            const filteredPivot = useMemo(() => {
+                let filtered = pivotData.pivot;
+                
+                if (filters.region !== 'Alle') {
+                    filtered = filtered.filter(row => row.region === filters.region);
+                }
+                
+                return filtered;
+            }, [pivotData, filters]);
+
+            const sortedPivot = useMemo(() => {
+                if (!sortConfig.key) return filteredPivot;
+                
+                return [...filteredPivot].sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    if (sortConfig.key === 'region') {
+                        aVal = a.region;
+                        bVal = b.region;
+                    } else {
+                        aVal = a[sortConfig.key]?.revenue || 0;
+                        bVal = b[sortConfig.key]?.revenue || 0;
+                    }
+                    
+                    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+                    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }, [filteredPivot, sortConfig]);
+
+            const chartData = useMemo(() => {
+                const months = Object.keys(monthlyData).sort();
+                return months.map(month => {
+                    const monthName = new Date(month + '-01').toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+                    const total = Object.values(monthlyData[month]).reduce((sum, item) => sum + item.revenue, 0);
+                    return { month: monthName, umsatz: Math.round(total) };
+                });
+            }, [monthlyData]);
+
+            if (loading) {
+                return <div className="flex items-center justify-center h-screen">Lade Daten...</div>;
+            }
+
+            const visibleProducts = filters.product === 'Alle' 
+                ? pivotData.products 
+                : pivotData.products.filter(p => p === filters.product);
+
+            return (
+                <div className="min-h-screen bg-gray-50 p-6">
+                    <div className="max-w-7xl mx-auto">
+                        <h1 className="text-3xl font-bold text-gray-900 mb-6">Verkaufsdaten Analyse 2024</h1>
+                        
+                        {kpis && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                <div className="bg-white rounded-lg shadow-md p-6">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Icon name="dollar-sign" size={24} className="text-blue-500" />
+                                        <span className="text-sm text-gray-500">Gesamtumsatz</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-gray-900">{formatCurrency(kpis.totalRevenue)}</div>
+                                    <div className="text-sm text-gray-600 mt-1">Ø {formatCurrency(kpis.avgMonthlyRevenue)}/Monat</div>
+                                </div>
+
+                                <div className="bg-white rounded-lg shadow-md p-6">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Icon name="award" size={24} className="text-green-500" />
+                                        <span className="text-sm text-gray-500">Beste Region</span>
+                                    
