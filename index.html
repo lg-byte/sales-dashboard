@@ -35,6 +35,10 @@
         .btn:hover { border-color: #3b82f6; background: #f9fafb; }
         .btn.active { border-color: #3b82f6; background: #eff6ff; }
         
+        /* Excel Button */
+        .excel-btn { padding: 12px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s; }
+        .excel-btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+        
         /* Answer Box */
         .answer-box { background: linear-gradient(to right, #eff6ff, #eef2ff); border: 1px solid #93c5fd; border-radius: 8px; padding: 16px; margin-top: 16px; }
         
@@ -67,9 +71,6 @@
         .trend-up { color: #16a34a; font-size: 16px; }
         .trend-down { color: #dc2626; font-size: 16px; }
         
-        /* Chart */
-        canvas { max-width: 100%; height: 300px !important; }
-        
         /* Loading */
         .loading { display: flex; align-items: center; justify-content: center; height: 400px; font-size: 20px; color: #6b7280; }
         .hidden { display: none; }
@@ -89,6 +90,12 @@
 <body>
     <div class="container">
         <h1>📊 Verkaufsdaten Analyse 2024</h1>
+        
+        <div style="margin-bottom: 24px;">
+            <button onclick="exportToExcel()" class="excel-btn">
+                📥 Excel Export
+            </button>
+        </div>
         
         <div id="loading" class="loading">Lade Daten...</div>
         
@@ -121,6 +128,7 @@
             <!-- Heatmap -->
             <div class="card">
                 <h2>Heatmap: Umsatz nach Region & Produkt</h2>
+                <p style="font-size: 14px; color: #6b7280; margin-bottom: 16px;">Gesamtumsatz über alle Monate (Jan - Jun 2024)</p>
                 <div id="heatmap" style="overflow-x: auto;"></div>
                 <div class="legend">
                     <span style="font-weight: 600;">Legende:</span>
@@ -130,17 +138,11 @@
                     <div class="legend-item"><div class="legend-box heat-low"></div><span>Niedrig</span></div>
                 </div>
             </div>
-            
-            <!-- Chart -->
-            <div class="card">
-                <h2>Monatlicher Umsatztrend</h2>
-                <canvas id="chart"></canvas>
-            </div>
-            
+
             <!-- Pivot -->
             <div class="card">
                 <h2>Pivot-Tabelle: Umsatz nach Region & Produkt</h2>
-                <p style="font-size: 14px; color: #6b7280; margin-bottom: 16px;">Mit Wachstumsraten (aktueller vs. vorheriger Monat)</p>
+                <p style="font-size: 14px; color: #6b7280; margin-bottom: 16px;">Aktueller Monat (Juni 2024) mit Wachstumsrate zum Vormonat</p>
                 <div id="pivot" style="overflow-x: auto;"></div>
                 <div class="legend">
                     <span style="font-weight: 600;">Legende:</span>
@@ -153,57 +155,57 @@
     </div>
 
     <script>
-        const csvData = `Datum,Region,Produkt,Kategorie,Verkäufer,Anzahl,Einzelpreis,Umsatz
+        const csvData = `Datum,Region,Produkt,Kategorie,Verkaeufer,Anzahl,Einzelpreis,Umsatz
 2024-01-05,Nord,Laptop ProBook 450,Elektronik,Schmidt,3,899.99,2699.97
-2024-01-08,Süd,Office Stuhl Premium,Möbel,Müller,5,249.50,1247.50
+2024-01-08,Sued,Office Stuhl Premium,Moebel,Mueller,5,249.50,1247.50
 2024-01-12,Ost,Drucker LaserJet Pro,Elektronik,Weber,2,459.99,919.98
-2024-01-15,West,Schreibtisch Eiche,Möbel,Fischer,1,599.00,599.00
+2024-01-15,West,Schreibtisch Eiche,Moebel,Fischer,1,599.00,599.00
 2024-01-18,Nord,Monitor 27 Zoll,Elektronik,Schmidt,8,299.99,2399.92
-2024-01-22,Süd,Tastatur Mechanisch,Elektronik,Müller,12,89.99,1079.88
-2024-01-25,Ost,Bürostuhl Basic,Möbel,Weber,6,149.99,899.94
+2024-01-22,Sued,Tastatur Mechanisch,Elektronik,Mueller,12,89.99,1079.88
+2024-01-25,Ost,Buerostuhl Basic,Moebel,Weber,6,149.99,899.94
 2024-01-28,West,Laptop ProBook 450,Elektronik,Fischer,2,899.99,1799.98
-2024-02-02,Nord,Rollcontainer,Möbel,Schmidt,4,129.99,519.96
-2024-02-05,Süd,Drucker LaserJet Pro,Elektronik,Müller,3,459.99,1379.97
+2024-02-02,Nord,Rollcontainer,Moebel,Schmidt,4,129.99,519.96
+2024-02-05,Sued,Drucker LaserJet Pro,Elektronik,Mueller,3,459.99,1379.97
 2024-02-09,Ost,Monitor 27 Zoll,Elektronik,Weber,5,299.99,1499.95
 2024-02-12,West,Maus Wireless,Elektronik,Fischer,15,29.99,449.85
-2024-02-16,Nord,Schreibtisch Eiche,Möbel,Schmidt,2,599.00,1198.00
-2024-02-19,Süd,Laptop ProBook 450,Elektronik,Müller,4,899.99,3599.96
-2024-02-23,Ost,Office Stuhl Premium,Möbel,Weber,3,249.50,748.50
+2024-02-16,Nord,Schreibtisch Eiche,Moebel,Schmidt,2,599.00,1198.00
+2024-02-19,Sued,Laptop ProBook 450,Elektronik,Mueller,4,899.99,3599.96
+2024-02-23,Ost,Office Stuhl Premium,Moebel,Weber,3,249.50,748.50
 2024-02-26,West,Tastatur Mechanisch,Elektronik,Fischer,10,89.99,899.90
 2024-03-01,Nord,Drucker LaserJet Pro,Elektronik,Schmidt,1,459.99,459.99
-2024-03-05,Süd,Monitor 27 Zoll,Elektronik,Müller,7,299.99,2099.93
+2024-03-05,Sued,Monitor 27 Zoll,Elektronik,Mueller,7,299.99,2099.93
 2024-03-08,Ost,Laptop ProBook 450,Elektronik,Weber,5,899.99,4499.95
-2024-03-12,West,Bürostuhl Basic,Möbel,Fischer,8,149.99,1199.92
+2024-03-12,West,Buerostuhl Basic,Moebel,Fischer,8,149.99,1199.92
 2024-03-15,Nord,Maus Wireless,Elektronik,Schmidt,20,29.99,599.80
-2024-03-19,Süd,Schreibtisch Eiche,Möbel,Müller,3,599.00,1797.00
+2024-03-19,Sued,Schreibtisch Eiche,Moebel,Mueller,3,599.00,1797.00
 2024-03-22,Ost,Tastatur Mechanisch,Elektronik,Weber,9,89.99,809.91
-2024-03-26,West,Office Stuhl Premium,Möbel,Fischer,4,249.50,998.00
+2024-03-26,West,Office Stuhl Premium,Moebel,Fischer,4,249.50,998.00
 2024-03-29,Nord,Laptop ProBook 450,Elektronik,Schmidt,6,899.99,5399.94
-2024-04-02,Süd,Rollcontainer,Möbel,Müller,7,129.99,909.93
+2024-04-02,Sued,Rollcontainer,Moebel,Mueller,7,129.99,909.93
 2024-04-05,Ost,Drucker LaserJet Pro,Elektronik,Weber,4,459.99,1839.96
 2024-04-09,West,Monitor 27 Zoll,Elektronik,Fischer,6,299.99,1799.94
-2024-04-12,Nord,Office Stuhl Premium,Möbel,Schmidt,5,249.50,1247.50
-2024-04-16,Süd,Tastatur Mechanisch,Elektronik,Müller,11,89.99,989.89
+2024-04-12,Nord,Office Stuhl Premium,Moebel,Schmidt,5,249.50,1247.50
+2024-04-16,Sued,Tastatur Mechanisch,Elektronik,Mueller,11,89.99,989.89
 2024-04-19,Ost,Laptop ProBook 450,Elektronik,Weber,3,899.99,2699.97
-2024-04-23,West,Schreibtisch Eiche,Möbel,Fischer,2,599.00,1198.00
+2024-04-23,West,Schreibtisch Eiche,Moebel,Fischer,2,599.00,1198.00
 2024-04-26,Nord,Maus Wireless,Elektronik,Schmidt,18,29.99,539.82
-2024-04-30,Süd,Bürostuhl Basic,Möbel,Müller,9,149.99,1349.91
+2024-04-30,Sued,Buerostuhl Basic,Moebel,Mueller,9,149.99,1349.91
 2024-05-03,Ost,Monitor 27 Zoll,Elektronik,Weber,10,299.99,2999.90
 2024-05-07,West,Drucker LaserJet Pro,Elektronik,Fischer,2,459.99,919.98
 2024-05-10,Nord,Laptop ProBook 450,Elektronik,Schmidt,7,899.99,6299.93
-2024-05-14,Süd,Office Stuhl Premium,Möbel,Müller,6,249.50,1497.00
+2024-05-14,Sued,Office Stuhl Premium,Moebel,Mueller,6,249.50,1497.00
 2024-05-17,Ost,Tastatur Mechanisch,Elektronik,Weber,13,89.99,1169.87
-2024-05-21,West,Rollcontainer,Möbel,Fischer,5,129.99,649.95
-2024-05-24,Nord,Schreibtisch Eiche,Möbel,Schmidt,1,599.00,599.00
-2024-05-28,Süd,Maus Wireless,Elektronik,Müller,22,29.99,659.78
+2024-05-21,West,Rollcontainer,Moebel,Fischer,5,129.99,649.95
+2024-05-24,Nord,Schreibtisch Eiche,Moebel,Schmidt,1,599.00,599.00
+2024-05-28,Sued,Maus Wireless,Elektronik,Mueller,22,29.99,659.78
 2024-05-31,Ost,Laptop ProBook 450,Elektronik,Weber,4,899.99,3599.96
 2024-06-04,West,Monitor 27 Zoll,Elektronik,Fischer,8,299.99,2399.92
-2024-06-07,Nord,Bürostuhl Basic,Möbel,Schmidt,7,149.99,1049.93
-2024-06-11,Süd,Drucker LaserJet Pro,Elektronik,Müller,3,459.99,1379.97
-2024-06-14,Ost,Office Stuhl Premium,Möbel,Weber,4,249.50,998.00
+2024-06-07,Nord,Buerostuhl Basic,Moebel,Schmidt,7,149.99,1049.93
+2024-06-11,Sued,Drucker LaserJet Pro,Elektronik,Mueller,3,459.99,1379.97
+2024-06-14,Ost,Office Stuhl Premium,Moebel,Weber,4,249.50,998.00
 2024-06-18,West,Tastatur Mechanisch,Elektronik,Fischer,14,89.99,1259.86
 2024-06-21,Nord,Laptop ProBook 450,Elektronik,Schmidt,5,899.99,4499.95
-2024-06-25,Süd,Schreibtisch Eiche,Möbel,Müller,2,599.00,1198.00
+2024-06-25,Sued,Schreibtisch Eiche,Moebel,Mueller,2,599.00,1198.00
 2024-06-28,Ost,Maus Wireless,Elektronik,Weber,19,29.99,569.81`;
 
         let data = [];
@@ -212,12 +214,21 @@
         const fmt = (v) => new Intl.NumberFormat('de-DE', {style:'currency', currency:'EUR'}).format(v);
         const getGrowthClass = (g) => g > 15 ? 'growth-high' : g < -15 ? 'growth-low' : 'growth-neutral';
         
-        // Simple CSV Parser
+        // Umlaute zurück konvertieren
+        const fixUmlauts = (str) => {
+            return str
+                .replace(/Sued/g, 'Süd')
+                .replace(/Moebel/g, 'Möbel')
+                .replace(/Mueller/g, 'Müller')
+                .replace(/Buerostuhl/g, 'Bürostuhl')
+                .replace(/Verkaeufer/g, 'Verkäufer');
+        };
+        
         function parseCSV(csv) {
             const lines = csv.trim().split('\n');
-            const headers = lines[0].split(',');
+            const headers = lines[0].split(',').map(h => fixUmlauts(h));
             return lines.slice(1).map(line => {
-                const values = line.split(',');
+                const values = line.split(',').map(v => fixUmlauts(v));
                 const obj = {};
                 headers.forEach((h, i) => {
                     const val = values[i];
@@ -240,7 +251,6 @@
             renderQuestions();
             renderQuarters();
             renderHeatmap();
-            renderChart();
             renderPivot();
             
             document.getElementById('loading').classList.add('hidden');
@@ -371,7 +381,6 @@
             `;
             answerBox.classList.remove('hidden');
             
-            // Update button states
             document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
         }
@@ -430,109 +439,45 @@
             document.getElementById('heatmap').innerHTML = html;
         }
         
-        function renderChart() {
-            const months = [...new Set(data.map(d => d.Datum.substring(0, 7)))].sort();
-            const chartData = months.map(m => {
-                const total = data.filter(d => d.Datum.startsWith(m)).reduce((s, r) => s + r.Umsatz, 0);
-                return {month: m, value: total};
-            });
-            
-            const canvas = document.getElementById('chart');
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width = canvas.offsetWidth;
-            const height = canvas.height = 300;
-            
-            const padding = 50;
-            const maxVal = Math.max(...chartData.map(d => d.value));
-            const step = (height - padding * 2) / maxVal;
-            
-            // Clear
-            ctx.clearRect(0, 0, width, height);
-            
-            // Grid
-            ctx.strokeStyle = '#e5e7eb';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= 5; i++) {
-                const y = padding + (height - padding * 2) * i / 5;
-                ctx.beginPath();
-                ctx.moveTo(padding, y);
-                ctx.lineTo(width - padding, y);
-                ctx.stroke();
-            }
-            
-            // Line
-            ctx.strokeStyle = '#3b82f6';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            chartData.forEach((d, i) => {
-                const x = padding + (width - padding * 2) * i / (chartData.length - 1);
-                const y = height - padding - d.value * step;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            ctx.stroke();
-            
-            // Points
-            ctx.fillStyle = '#3b82f6';
-            chartData.forEach((d, i) => {
-                const x = padding + (width - padding * 2) * i / (chartData.length - 1);
-                const y = height - padding - d.value * step;
-                ctx.beginPath();
-                ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            
-            // Labels
-            ctx.fillStyle = '#6b7280';
-            ctx.font = '12px sans-serif';
-            ctx.textAlign = 'center';
-            chartData.forEach((d, i) => {
-                const x = padding + (width - padding * 2) * i / (chartData.length - 1);
-                ctx.fillText(d.month, x, height - padding + 20);
-            });
-            
-            // Y-axis labels
-            ctx.textAlign = 'right';
-            for (let i = 0; i <= 5; i++) {
-                const y = padding + (height - padding * 2) * i / 5;
-                const val = maxVal * (5 - i) / 5;
-                ctx.fillText(fmt(val), padding - 10, y + 4);
-            }
-        }
-        
         function renderPivot() {
             const regions = ['Nord', 'Süd', 'Ost', 'West'];
             const products = [...new Set(data.map(d => d.Produkt))];
             const months = [...new Set(data.map(d => d.Datum.substring(0, 7)))].sort();
             
-            const monthly = {};
-            months.forEach(m => monthly[m] = {});
+            const currentMonth = months[months.length - 1];
+            const previousMonth = months[months.length - 2];
+            
+            const currentData = {};
+            const previousData = {};
+            
             data.forEach(r => {
-                const m = r.Datum.substring(0, 7);
-                const k = `${r.Region}-${r.Produkt}`;
-                if (!monthly[m][k]) monthly[m][k] = 0;
-                monthly[m][k] += r.Umsatz;
+                const month = r.Datum.substring(0, 7);
+                const key = `${r.Region}-${r.Produkt}`;
+                
+                if (month === currentMonth) {
+                    currentData[key] = (currentData[key] || 0) + r.Umsatz;
+                } else if (month === previousMonth) {
+                    previousData[key] = (previousData[key] || 0) + r.Umsatz;
+                }
             });
             
             let html = '<table><thead><tr><th>Region</th>';
             products.forEach(p => html += `<th>${p}</th>`);
             html += '</tr></thead><tbody>';
             
-            regions.forEach((r, idx) => {
+            regions.forEach(r => {
                 html += `<tr><td style="font-weight: 600;">${r}</td>`;
                 products.forEach(p => {
-                    const k = `${r}-${p}`;
-                    let total = 0;
-                    const withData = months.filter(m => monthly[m][k]);
-                    const lastRev = withData.length > 0 ? monthly[withData[withData.length - 1]][k] : 0;
-                    const prevRev = withData.length > 1 ? monthly[withData[withData.length - 2]][k] : 0;
-                    months.forEach(m => total += monthly[m][k] || 0);
-                    const growth = prevRev > 0 ? ((lastRev - prevRev) / prevRev * 100) : (lastRev > 0 ? 100 : 0);
+                    const key = `${r}-${p}`;
+                    const currentRev = currentData[key] || 0;
+                    const prevRev = previousData[key] || 0;
+                    const growth = prevRev > 0 ? ((currentRev - prevRev) / prevRev * 100) : (currentRev > 0 ? 100 : 0);
                     const growthClass = getGrowthClass(growth);
+                    
                     html += `
                         <td>
                             <div class="${growthClass}" style="border-radius: 6px; padding: 8px;">
-                                <div style="font-weight: 600; margin-bottom: 4px;">${fmt(total)}</div>
+                                <div style="font-weight: 600; margin-bottom: 4px;">${fmt(currentRev)}</div>
                                 <div style="font-size: 12px; display: flex; align-items: center; gap: 4px;">
                                     <span class="${growth > 0 ? 'trend-up' : 'trend-down'}">${growth > 0 ? '↑' : '↓'}</span>
                                     ${growth.toFixed(1)}%
@@ -548,8 +493,113 @@
             document.getElementById('pivot').innerHTML = html;
         }
         
-        // Initialize
         window.addEventListener('load', init);
+        
+        function exportToExcel() {
+            const months = [...new Set(data.map(d => d.Datum.substring(0, 7)))].sort();
+            
+            let xlsx = '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>';
+            xlsx += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ';
+            xlsx += 'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
+            
+            // Tab 1: KPIs
+            xlsx += '<Worksheet ss:Name="KPIs"><Table>';
+            xlsx += '<Row><Cell><Data ss:Type="String">Metrik</Data></Cell><Cell><Data ss:Type="String">Wert</Data></Cell></Row>';
+            
+            const total = data.reduce((s, r) => s + r.Umsatz, 0);
+            const avg = total / months.length;
+            
+            xlsx += `<Row><Cell><Data ss:Type="String">Gesamtumsatz</Data></Cell><Cell><Data ss:Type="Number">${total.toFixed(2)}</Data></Cell></Row>`;
+            xlsx += `<Row><Cell><Data ss:Type="String">Durchschnitt/Monat</Data></Cell><Cell><Data ss:Type="Number">${avg.toFixed(2)}</Data></Cell></Row>`;
+            
+            xlsx += '</Table></Worksheet>';
+            
+            // Tab 2: Rohdaten
+            xlsx += '<Worksheet ss:Name="Rohdaten"><Table>';
+            xlsx += '<Row>';
+            xlsx += '<Cell><Data ss:Type="String">Datum</Data></Cell>';
+            xlsx += '<Cell><Data ss:Type="String">Region</Data></Cell>';
+            xlsx += '<Cell><Data ss:Type="String">Produkt</Data></Cell>';
+            xlsx += '<Cell><Data ss:Type="String">Kategorie</Data></Cell>';
+            xlsx += '<Cell><Data ss:Type="String">Verkäufer</Data></Cell>';
+            xlsx += '<Cell><Data ss:Type="String">Anzahl</Data></Cell>';
+            xlsx += '<Cell><Data ss:Type="String">Einzelpreis</Data></Cell>';
+            xlsx += '<Cell><Data ss:Type="String">Umsatz</Data></Cell>';
+            xlsx += '</Row>';
+            
+            data.forEach(row => {
+                xlsx += '<Row>';
+                xlsx += `<Cell><Data ss:Type="String">${row.Datum}</Data></Cell>`;
+                xlsx += `<Cell><Data ss:Type="String">${row.Region}</Data></Cell>`;
+                xlsx += `<Cell><Data ss:Type="String">${row.Produkt}</Data></Cell>`;
+                xlsx += `<Cell><Data ss:Type="String">${row.Kategorie}</Data></Cell>`;
+                xlsx += `<Cell><Data ss:Type="String">${row.Verkäufer}</Data></Cell>`;
+                xlsx += `<Cell><Data ss:Type="Number">${row.Anzahl}</Data></Cell>`;
+                xlsx += `<Cell><Data ss:Type="Number">${row.Einzelpreis}</Data></Cell>`;
+                xlsx += `<Cell><Data ss:Type="Number">${row.Umsatz}</Data></Cell>`;
+                xlsx += '</Row>';
+            });
+            
+            xlsx += '</Table></Worksheet>';
+            
+            // Tab 3: Pivot Juni 2024
+            const regions = ['Nord', 'Süd', 'Ost', 'West'];
+            const products = [...new Set(data.map(d => d.Produkt))];
+            
+            const currentMonth = months[months.length - 1];
+            const previousMonth = months[months.length - 2];
+            
+            const currentData = {};
+            const previousData = {};
+            
+            data.forEach(r => {
+                const month = r.Datum.substring(0, 7);
+                const key = `${r.Region}-${r.Produkt}`;
+                
+                if (month === currentMonth) {
+                    currentData[key] = (currentData[key] || 0) + r.Umsatz;
+                } else if (month === previousMonth) {
+                    previousData[key] = (previousData[key] || 0) + r.Umsatz;
+                }
+            });
+            
+            xlsx += '<Worksheet ss:Name="Pivot Juni 2024"><Table>';
+            xlsx += '<Row><Cell><Data ss:Type="String">Region</Data></Cell>';
+            products.forEach(p => {
+                xlsx += `<Cell><Data ss:Type="String">${p}</Data></Cell>`;
+                xlsx += `<Cell><Data ss:Type="String">${p} Wachstum %</Data></Cell>`;
+            });
+            xlsx += '</Row>';
+            
+            regions.forEach(r => {
+                xlsx += '<Row>';
+                xlsx += `<Cell><Data ss:Type="String">${r}</Data></Cell>`;
+                products.forEach(p => {
+                    const key = `${r}-${p}`;
+                    const currentRev = currentData[key] || 0;
+                    const prevRev = previousData[key] || 0;
+                    const growth = prevRev > 0 ? ((currentRev - prevRev) / prevRev * 100) : 0;
+                    
+                    xlsx += `<Cell><Data ss:Type="Number">${currentRev.toFixed(2)}</Data></Cell>`;
+                    xlsx += `<Cell><Data ss:Type="Number">${growth.toFixed(1)}</Data></Cell>`;
+                });
+                xlsx += '</Row>';
+            });
+            
+            xlsx += '</Table></Worksheet>';
+            
+            xlsx += '</Workbook>';
+            
+            const blob = new Blob([xlsx], {type: 'application/vnd.ms-excel'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Verkaufsdaten_Dashboard_' + new Date().toISOString().split('T')[0] + '.xls';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 </html>
